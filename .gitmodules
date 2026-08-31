@@ -1,0 +1,3 @@
+[submodule "void-scanner"]
+	path = void-scanner
+	url = git@github.com:Xilliano/void-scanner.git
