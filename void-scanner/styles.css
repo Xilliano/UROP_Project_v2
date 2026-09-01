@@ -62,6 +62,14 @@ form {
     color: antiquewhite
 }
 
+.invalid, .valid {
+    display: none;
+}
+
+form:has(:user-invalid) .invalid {
+    display:block;
+}
+
 .buttons {
     display: flex;
     justify-content: space-around;

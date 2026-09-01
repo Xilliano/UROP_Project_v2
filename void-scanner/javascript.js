@@ -2,12 +2,15 @@ const inputImg = document.querySelector('#image');
 const image = document.querySelector("img");
 const reset = document.querySelector("button[type=reset]");
 const form = document.querySelector("form");
-const slider = document.querySelector('#slider')
+const slider = document.querySelector('#slider');
+const valid = document.querySelector(".valid");
 
 inputImg.addEventListener("change", () => {
     const [file] = inputImg.files;
-    if (file) {
+
+    if (file && file.type.match('image.*')) {
         image.src = URL.createObjectURL(file);
+        valid.style.display = 'block';
     }
 })
 
@@ -25,10 +28,12 @@ reset.addEventListener("click", () => {
     image.src = '';
     slider.value = 1;
     slider.style.display = 'none';
+    valid.style.display = 'none';
 })
 
 form.addEventListener("submit", (event) => {
     slider.style.display = "block";
+    valid.style.display = 'none';
 })
 
 slider.addEventListener("change", () => {
