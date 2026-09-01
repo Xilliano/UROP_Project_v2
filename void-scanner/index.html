@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Void Scanner</title>
+    <link rel="stylesheet" href="./styles.css">
+    <script src="javascript.js" defer></script>
+</head>
+<body>
+    <div class="header">VOID DETECTION</div>
+    <div class="sidebar left">
+        <iframe name="dummyframe" id="dummyframe" style="display: none;"></iframe>
+        <form action="http://127.0.0.1:8000/upload-image" method="POST" target="dummyframe"
+        enctype="multipart/form-data">
+            <div class="submit image">
+                <label for="image">Add Image</label>
+                <input type="file" id="image" name="image" title=""
+                accept=".png, .jpeg, .jpg" required >
+            </div>
+
+            <div class="buttons">
+                <button type="submit">Submit</button>
+                <button type="reset">Reset</button>
+            </div>
+
+        </form>
+    </div>
+    <div class="viewport">
+        <img>
+    </div>
+    <div class="sidebar right">
+        <input type="range" min="1" max="4" value="1" id="slider">
+    </div>
+    <div class="footer"></div>
+</body>
+</html>

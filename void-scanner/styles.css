@@ -1,0 +1,125 @@
+html, body {
+    margin: 0;
+    height: 100%;
+    font-family: Roboto, system-ui;
+    --background: rgb(191, 188, 212);
+    --blue: rgb(67, 121, 207);
+}
+
+body {
+    display: grid;
+    grid-template-columns: 2fr 7fr 2fr;
+    grid-template-rows: .5fr 8fr .5fr;
+    background-color: var(--background);
+}
+
+body > * {
+    border: 1px black solid;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    padding-left: 2vmin;
+    grid-column: 1 / 4;
+    grid-row: 1 / 2;
+}
+
+.sidebar.left {
+    grid-column: 1/2;
+    grid-row: 2/3;
+}
+
+.sidebar.right {
+    grid-column: 3/4;
+    grid-row: 2/3;
+}
+
+form {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.submit > input {
+    display: none;
+}
+
+.submit > label {
+    display: block;
+    padding: 1vmin;
+    margin: 1vmin;
+    text-align: center;
+    border: 2px black solid;
+    border-radius: 6px;
+    font-size: clamp(1vw, 2.5vw, 20px);
+}
+
+.submit > label:hover {
+    /* border-color: var(--blue); */
+    background-color: var(--blue);
+    color: antiquewhite
+}
+
+.buttons {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 2vmin;
+}
+
+button {
+    background-color: var(--background);
+    border: 2px black solid;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: clamp(1vw, 2.5vw, 20px);
+    padding: 5px 15px;
+}
+
+button:active {
+    background-color: rgb(91, 137, 211) !important;
+}
+
+button:hover {
+    background-color: var(--blue);
+    color: antiquewhite
+}
+
+.viewport {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    grid-column: 2/3;
+    grid-row: 2/3;
+}
+
+img {
+    width: 100%;
+    height: auto;
+    cursor: zoom-in;
+    transition: transform 0.2s;
+}
+
+img.zoomed {
+    transform: scale(2);
+    cursor: zoom-out;
+}
+
+.sidebar.right {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#slider {
+    writing-mode: vertical-lr;
+    direction:ltr;
+    display: none;
+}
+
+.footer{
+    grid-column: 1 / 4;
+    grid-row: 3 / 4;
+}
