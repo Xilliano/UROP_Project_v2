@@ -67,7 +67,8 @@ form {
 }
 
 form:has(:user-invalid) .invalid {
-    display:block;
+    display: block;
+    text-align: center;
 }
 
 .buttons {
