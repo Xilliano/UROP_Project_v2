@@ -64,11 +64,11 @@ form {
 
 .invalid, .valid {
     display: none;
+    text-align: center;
 }
 
 form:has(:user-invalid) .invalid {
     display: block;
-    text-align: center;
 }
 
 .buttons {

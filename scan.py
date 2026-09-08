@@ -1,12 +1,11 @@
 import cv2
 import numpy as np
-import pandas as pd
 from itertools import combinations
 
 from fastapi import FastAPI, File, UploadFile
 from fastapi.responses import Response
 
-images = []
+images = {}
 
 app = FastAPI()
 
@@ -17,38 +16,68 @@ async def home(image_number: int):
     else:
         return {"Message": "Congrats! This is your first API!"}
 
+@app.get("/get-parameters")
+async def return_parameters():
+    return getAllParameters(filters)
+
 @app.post("/upload-image")
 async def create_upload_file(image: UploadFile = File(...)):
     content = await image.read()
-
-    content = decode(content)
-
-    images.append(encode(content))
-
-    content = thresh(content, 199, 50)
-    images.append(encode(content))
-
-    content = blur(content, 5)
-    images.append(encode(content))
-
-    content = convexity_analysis(content, .1)
-    images.append(encode(content))
+    applyFilters(content, filters)
 
     return {
         "filename": image.filename,
         "content_type": image.content_type,
     }
 
+def getAllParameters(filters: list):
+    return [
+        {filter.name: filter.getParameters()}
+        for filter in filters
+    ]
+
+
+def applyFilters(img, filters: list, to=None):
+    # Assumes data still in png bytes
+    images[0] = img
+    img_dcd = decode(img)
+    for i, filter in enumerate(filters, start=1):
+        img_dcd = filter(img_dcd)
+        images[i] = encode(img_dcd)
+        if i == to: break
+
 class Filter:
-    def __init__(self, filter, params: list):
+    def __init__(self, name, filter, params: list):
+        self.name = name
         self.filter = filter
         self.params = params
 
+    def getParamLength(self):
+        return len(self.params)
+
+    def getParameters(self):
+        return [param.getAsDict() for param in self.params]
+
+    def __call__(self, img):
+        values = [param.value for param in self.params]
+        return self.filter(img, *values)
+
 class Parameter:
-    def __init__(self, name: str, range: tuple, even: bool):
+    def __init__(self, name: str, minmax: tuple, constraint: bool, defaultValue: float):
         self.name = name
-        self.range = range
-        self.even = even
+        min, max = minmax
+        self.range = range(min, max+1)
+        self.range = range(min, max+1, 2 if constraint else 1)
+        self.constraint = constraint
+        self.value = defaultValue
+
+    def getAsDict(self):
+        return {
+            'name': self.name,
+            'range': list(self.range),
+            'value': self.value
+        }
+
 
 def decode(img):
     return cv2.imdecode(
@@ -57,7 +86,7 @@ def decode(img):
     )
 
 def encode(img):
-    success, encoded = cv2.imencode(".png", img)
+    _, encoded = cv2.imencode(".png", img)
     return encoded.tobytes()
 
 def otsu(img):
@@ -125,27 +154,32 @@ def convexity_analysis(img, error: float):
 
     return img
 
-otsu_obj = Filter(otsu, [])
+OtsuThresh = Filter('Otsu', otsu, [])
 
-thresh_obj = Filter(
+Threshold = Filter(
+    'Adaptive Threshold',
     thresh,
     [
-        Parameter("block_size", (100, 300), True),
-        Parameter("sensitivity", (0, 100), False),
+        Parameter("block_size", (99, 299), True, 199),
+        Parameter("sensitivity", (0, 100), False, 50),
     ],
 )
 
-blur_obj = Filter(
+Blurring = Filter(
+    'Blur',
     blur,
     [
-        Parameter("kernel_size", (0, 50), True),
+        Parameter("kernel_size", (1, 49), True, 5),
     ],
 )
 
-convexity_analysis_obj = Filter(
+ConvexityAnalysis = Filter(
+    'Convexity Analysis',
     convexity_analysis,
     [
         #Parameter("contour_sens", (0, 100), False),
-        Parameter("error", (0, 1), False),
+        Parameter("error", (0, 1), False, 0.1),
     ]
 )
+
+filters = [Threshold, Blurring, ConvexityAnalysis]
