@@ -5,20 +5,36 @@ from itertools import combinations
 from fastapi import FastAPI, File, UploadFile
 from fastapi.responses import Response
 
+from fastapi.middleware.cors import CORSMiddleware
+
 images = {}
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["null"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/get-image/{image_number}")
 async def home(image_number: int):
     if images:
         return Response(content=images[image_number], media_type="image/png")
-    else:
-        return {"Message": "Congrats! This is your first API!"}
 
 @app.get("/get-parameters")
 async def return_parameters():
     return getAllParameters(filters)
+
+@app.post("/set-parameters")
+async def update_images(parameters: dict):
+    filterNum = parameters['filterNumber']
+    paramName = parameters['parameterName']
+    paramValue = parameters['parameterValue']
+    filters[filterNum-1].setParamValue(paramName, paramValue)
+
+    applyFilters(images[0], filters, to=filterNum)
 
 @app.post("/upload-image")
 async def create_upload_file(image: UploadFile = File(...)):
@@ -36,7 +52,6 @@ def getAllParameters(filters: list):
         for filter in filters
     ]
 
-
 def applyFilters(img, filters: list, to=None):
     # Assumes data still in png bytes
     images[0] = img
@@ -44,7 +59,6 @@ def applyFilters(img, filters: list, to=None):
     for i, filter in enumerate(filters, start=1):
         img_dcd = filter(img_dcd)
         images[i] = encode(img_dcd)
-        if i == to: break
 
 class Filter:
     def __init__(self, name, filter, params: list):
@@ -58,24 +72,34 @@ class Filter:
     def getParameters(self):
         return [param.getAsDict() for param in self.params]
 
+    def setParamValue(self, paramName, paramValue):
+        for param in self.params:
+            if param.name == paramName:
+                param.value = paramValue
+
+    def getParamValue(self, paramName):
+        for param in self.params:
+            if param.name == paramName:
+                return param.value
+
     def __call__(self, img):
         values = [param.value for param in self.params]
         return self.filter(img, *values)
 
 class Parameter:
-    def __init__(self, name: str, minmax: tuple, constraint: bool, defaultValue: float):
+    def __init__(self, name: str, minmax: tuple, step: float, defaultValue: float):
         self.name = name
-        min, max = minmax
-        self.range = range(min, max+1)
-        self.range = range(min, max+1, 2 if constraint else 1)
-        self.constraint = constraint
+        self.min, self.max = minmax
+        self.step = step
         self.value = defaultValue
 
     def getAsDict(self):
         return {
             'name': self.name,
-            'range': list(self.range),
-            'value': self.value
+            'min': self.min,
+            'max': self.max,
+            'step': self.step,
+            'value': self.value,
         }
 
 
@@ -160,8 +184,8 @@ Threshold = Filter(
     'Adaptive Threshold',
     thresh,
     [
-        Parameter("block_size", (99, 299), True, 199),
-        Parameter("sensitivity", (0, 100), False, 50),
+        Parameter("block_size", (99, 299), 2, 199),
+        Parameter("sensitivity", (0, 100), 1, 50),
     ],
 )
 
@@ -169,7 +193,7 @@ Blurring = Filter(
     'Blur',
     blur,
     [
-        Parameter("kernel_size", (1, 49), True, 5),
+        Parameter("kernel_size", (1, 49), 2, 5),
     ],
 )
 
@@ -178,7 +202,7 @@ ConvexityAnalysis = Filter(
     convexity_analysis,
     [
         #Parameter("contour_sens", (0, 100), False),
-        Parameter("error", (0, 1), False, 0.1),
+        Parameter("error", (0, 1), .1, 0.1),
     ]
 )
 

@@ -7,6 +7,8 @@ const valid = document.querySelector(".valid");
 const server = 'http://127.0.0.1:8000';
 const parametersDiv = document.querySelector(".parameters");
 
+let currentImg = 0;
+
 inputImg.addEventListener("change", () => {
     const [file] = inputImg.files;
 
@@ -28,43 +30,111 @@ image.addEventListener("dblclick", (event) => {
 
 reset.addEventListener("click", () => {
     image.src = '';
-    slider.value = 1;
+    slider.value = 0;
     slider.style.display = 'none';
     valid.style.display = 'none';
+    removeChildren(parametersDiv);
 })
 
-form.addEventListener("submit", (event) => {
-    slider.style.display = "block";
-    valid.style.display = 'none';
+form.addEventListener("submit", submit);
 
-    // displayParameters(data);
-})
-
-async function getData() {
-    let parameters = await fetch(`${server}/get-parameters`);
-    let data = await parameters.json();
-}
-
-slider.addEventListener("change", () => {
+slider.addEventListener("input", () => {
     let value = slider.value;
     try {
-        image.src = `http://127.0.0.1:8000/get-image/${value-1}`;
+        image.src = `${server}/get-image/${value}?t=${Date.now()}`;
+        currentImg = Number(value);
     }
-    catch {
-        console.log('prob index error');
+    catch (error){
+        console.log(error);
     }
 })
 
+function removeChildren(element) {
+    while (element.firstChild) {
+        element.removeChild(element.lastChild);
+    }
+}
+
+async function submit() {
+    slider.style.display = "block";
+    valid.style.display = 'none';
+    let data = await getData();
+
+    displayParameters(data);
+}
+
+async function getData() {
+    let request = new Request(`${server}/get-parameters`);
+    let response = await fetch(request)
+    let parameters = await response.json();
+
+    return parameters;
+}
+
+async function parameterSliderEvent(slider, label, filterInfo) {
+    label.textContent = `${slider.value}`;
+    let filterNum = filterInfo[0];
+    let filterName = filterInfo[1];
+
+    const response = await fetch(`${server}/set-parameters`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            filterNumber: filterNum,
+            parameterName: filterName,
+            parameterValue: Number(slider.value)
+        })
+    });
+
+    if (filterNum <= currentImg) {
+        image.src = `${server}/get-image/${currentImg}?t=${Date.now()}`;;
+    }
+}
+
 function displayParameters(parameters) {
-    let length = parameters.length;
-    for(let i = 0; i < length; i++) {
+    let filters = parameters.map(filter => Object.keys(filter)[0]);
+    for(let i = 0; i < filters.length; i++) {
         let container = document.createElement("div");
         container.classList.add("parameter");
-        container.style.border = '1px red solid'
-        container.style.height = '50px';
-        container.style.width = 'auto';
-        container.textContent = parameters[i];
+        container.style.fontFamily = 'Roboto';
+        container.textContent = filters[i] + ':';
+
+        let propertiesContainer = document.createElement("ul");
+        let properties = Object.values(parameters[i])[0];
+        for(let j = 0; j < properties.length; j++) {
+            let propContainer = document.createElement('div');
+
+            let prop = document.createElement("li");
+            let parameter = properties[j];
+            prop.textContent = parameter.name + ':';
+            prop.style.listStyle = 'none';
+
+            let label = document.createElement('label');
+            label.textContent = `${parameter.value}`;
+
+            let input = document.createElement('input');
+            input.type = 'range';
+            input.min = parameter.min;
+            input.max = parameter.max;
+
+            input.step = parameter.step;
+
+            input.value = parameter.value;
+            input.style.display = 'block';
+
+            let filterInfo = [i+1, parameter.name]
+
+            input.addEventListener("input", () => parameterSliderEvent(input, label, filterInfo));
+
+            propContainer.append(prop);
+            propContainer.append(label);
+            propContainer.append(input);
+            propertiesContainer.appendChild(propContainer);
+        }
 
         parametersDiv.appendChild(container);
+        container.appendChild(propertiesContainer);
     }
 }
