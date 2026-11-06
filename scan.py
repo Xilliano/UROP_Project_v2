@@ -1,13 +1,13 @@
 import cv2
 import numpy as np
-from itertools import combinations
+import itertools
 
 from fastapi import FastAPI, File, UploadFile
 from fastapi.responses import Response
 
 from fastapi.middleware.cors import CORSMiddleware
 
-from compare import foo
+import compare
 
 images = {}
 
@@ -28,6 +28,10 @@ async def home(image_number: int):
 @app.get("/get-parameters")
 async def return_parameters():
     return getAllParameters(filters)
+
+@app.get("/get-comparison")
+async def return_comparison():
+    return
 
 @app.post("/set-parameters")
 async def update_images(parameters: dict):
@@ -61,6 +65,46 @@ def applyFilters(img, filters: list, to=None):
     for i, filter in enumerate(filters, start=1):
         img_dcd = filter(img_dcd)
         images[i] = encode(img_dcd)
+
+def optimizeParameters(step, filters):
+    # vary 1 parameter by step
+    # save points, append to list
+    # after all possible combos, send to compare
+    # return the best combination (minimum error)
+    pointsList = []
+    paramRanges = {}
+
+    for filter in filters:
+        for param in filter.params:
+            param.value = param.min
+            paramRanges[param.name] = np.arange(param.min, param.max, param.step*step)
+
+    # get default values, then start trying different combos
+    #pointsList.append(getFinalPoints())
+
+    keys = paramRanges.keys()
+    all_combinations = list(itertools.product(*paramRanges.values()))
+
+    print(all_combinations)
+
+def getFinalPoints():
+    points = []
+    final_image = decode(images[-1])
+    contours, _ = cv2.findContours(final_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    for c in contours:
+        M = cv2.moments(c)
+
+        if M["m00"] != 0:
+            cX = int(M["m10"] / M["m00"])
+            cY = int(M["m01"] / M["m00"])
+
+        else:
+            cX, cY = 0, 0
+
+        points.append((cX, cY))
+
+    return points
 
 class Filter:
     def __init__(self, name, filter, params: list):
@@ -172,7 +216,7 @@ def convexity_analysis(img, error: float):
                 foot = start_pt + proj
                 pts.append((foot, far_pt))
 
-        for (foot1, far1), (foot2, far2) in combinations(pts, 2):
+        for (foot1, far1), (foot2, far2) in itertools.combinations(pts, 2):
             v1 = far1 - foot1
             v2 = far2 - foot2
             if similar(v1, v2):
@@ -209,3 +253,5 @@ ConvexityAnalysis = Filter(
 )
 
 filters = [Threshold, Blurring, ConvexityAnalysis]
+
+optimizeParameters(4, filters)

@@ -1,13 +1,13 @@
-# import pandas as pd
+import pandas as pd
 
-# df = pd.read_excel("void_crossref_results_v3.xlsx")
-# print(df.axes)
+df = pd.read_excel("void_crossref_results_v3.xlsx", usecols=["Manual_X", "Manual_Y"])
+print(df)
 
-lst = {}
-lst[0] = 1
+def match_closest_points(dataframe, points):
+    pass
 
-def foo(a, b, c):
-    return a+b+c
+def calculate_error():
+    pass
 
-values = [1,2,3]
-print(lst[0])
+def optimize_parameters():
+    pass
