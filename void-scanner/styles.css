@@ -118,14 +118,21 @@ img.zoomed {
 
 .sidebar.right {
     display: flex;
-    justify-content: center;
     align-items: center;
+    flex-direction: column;
 }
 
 #slider {
     writing-mode: vertical-lr;
+    margin-top: auto;
     direction:ltr;
     display: none;
+}
+
+#compare {
+    display: none;
+    margin-top: auto;
+    margin-bottom: 2vmin;
 }
 
 .footer{

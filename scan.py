@@ -7,6 +7,8 @@ from fastapi.responses import Response
 
 from fastapi.middleware.cors import CORSMiddleware
 
+from compare import foo
+
 images = {}
 
 app = FastAPI()

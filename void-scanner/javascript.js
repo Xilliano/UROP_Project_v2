@@ -3,6 +3,7 @@ const image = document.querySelector("img");
 const reset = document.querySelector("button[type=reset]");
 const form = document.querySelector("form");
 const slider = document.querySelector('#slider');
+const compare = document.querySelector('#compare');
 const valid = document.querySelector(".valid");
 const server = 'http://127.0.0.1:8000';
 const parametersDiv = document.querySelector(".parameters");
@@ -33,6 +34,7 @@ reset.addEventListener("click", () => {
     slider.value = 0;
     slider.style.display = 'none';
     valid.style.display = 'none';
+    compare.style.display = 'none';
     removeChildren(parametersDiv);
 })
 
@@ -49,6 +51,10 @@ slider.addEventListener("input", () => {
     }
 })
 
+compare.addEventListener("click", () => {
+    
+})
+
 function removeChildren(element) {
     while (element.firstChild) {
         element.removeChild(element.lastChild);
@@ -57,11 +63,13 @@ function removeChildren(element) {
 
 async function submit() {
     slider.style.display = "block";
+    compare.style.display = 'inline';
     valid.style.display = 'none';
     let data = await getData();
 
     displayParameters(data);
 }
+
 
 async function getData() {
     let request = new Request(`${server}/get-parameters`);
